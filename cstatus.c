@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
-#include "/usr/include/X11/Xlib.h"
 #include <X11/Xlib.h>
 
 
