@@ -3,11 +3,22 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include "/usr/include/X11/Xlib.h"
+#include <X11/Xlib.h>
+
 
 // OPTS
 int delay = 3; // recount delay
 char *xsetr;   // output string
 char c_hour = 24;
+
+// X11
+static Display *display;
+// set status
+void xsetrootname(char *st) {
+    XStoreName(display, DefaultRootWindow(display), xsetr);
+    XSync(display, False);
+}
 
 // TIME ///////////////////////////////////////////////////////////////////////
 int hour;
@@ -106,17 +117,22 @@ void p_bat_type(char *xsr) {
     // add to buffer
     // strncat(xsr, bat_type, strlen(bat_type)-1);
     if (bat_type[0] == 'D') {
-        strncat(xsr, "B", 1);
+        strncat(xsr, "B:", 2);
     } else if (bat_type[0] == 'C') {
-        strncat(xsr, "C", 1);
+        strncat(xsr, "C:", 2);
     } else {
-        strncat(xsr, "F", 1);
+        strncat(xsr, "F:", 2);
     }
-    strcat(xsr, " ");
 }
 
 // MAIN LOOP //////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
+    // Open X11 display
+    display = XOpenDisplay(NULL);
+    if (display == NULL) {
+        printf("Failed to open display.\n");
+        return 10;
+    }
     // enabled
     char en_bat = 0;
     char en_time = 0;
@@ -176,12 +192,12 @@ int main(int argc, char *argv[]) {
     while (running == 1) {
         // output buffer
         xsetr = calloc(256, 1);
-        strncat(xsetr, "xsetroot -name \" ", 17);
+        strncat(xsetr, " ", 1);
         // bat
         if (en_bat == 1) {
             // battery
-            p_bat_percent(xsetr);
             p_bat_type(xsetr);
+            p_bat_percent(xsetr);
         }
         if (en_vol == 1) {
             // add volume
@@ -193,11 +209,10 @@ int main(int argc, char *argv[]) {
         if (en_time == 1) {
             p_time(xsetr);
         }
-        strncat(xsetr, "\"\0", 2);
         if (strlen(xsetr) > 16) {
-            system(xsetr);
+            xsetrootname(xsetr);
         }
-        printf("%s\n", xsetr);
         sleep(delay);
     }
+    XCloseDisplay(display);
 }
